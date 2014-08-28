@@ -1,0 +1,164 @@
+<html>
+<head>
+	<title>Aranoid</title>
+	<link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+	<div id='container'>
+		<div id='bricks'></div>
+		<div id='paddle'></div>
+		<div id='ball'></div>
+	</div>
+<script>
+
+	function Ball()
+	{
+		this.info = {
+			position: {
+				x: 150,
+				y: 480
+			},
+			momentum: {
+				x: 3,
+				y: -3
+			}
+		}
+
+		this.display = function()
+		{
+			document.getElementById('ball').style.top = this.info.position.y;
+			document.getElementById('ball').style.left = this.info.position.x;
+		}
+		
+		this.move = function()
+		{
+			if(this.info.position.x > 600 || this.info.position.x < 0)
+			{
+				this.info.momentum.x = this.info.momentum.x*-1;
+			}
+			if(this.info.position.y > 500 || this.info.position.y < 0)
+			{
+				this.info.momentum.y = this.info.momentum.y*-1;
+			}
+
+			this.info.position.x += this.info.momentum.x;
+			this.info.position.y += this.info.momentum.y;
+		}
+	}
+
+	function Paddle()
+	{
+		this.position = {
+			x: 450,
+			y: 500
+		}
+		this.display = function()
+		{
+			//style the paddle		
+			document.getElementById('paddle').style.top = this.position.y;
+			document.getElementById('paddle').style.left = this.position.x;
+		}
+	}
+
+	function Game()
+	{
+		var that = this;
+
+		this.ball = new Ball();
+		this.paddle = new Paddle();
+		this.bricks = {
+			length: 12,
+			width: 50,
+			height: 17,
+			world: [],
+			map: { 1: 'yellow', 2: 'blue', 3: 'red', 4: 'green', 5: 'brown' }
+		}
+
+		this.createBricks = function()
+		{
+			for(var i=0; i<this.bricks.length*9; i++)
+			{
+				this.bricks.world.push(Math.floor(Math.random()*5));	
+			}
+		}
+
+		this.displayStuff = function()
+		{
+			//style the ball
+			this.ball.display();
+			this.paddle.display();
+
+			var content = '';
+			//display bricks
+			for(i in this.bricks.world)
+			{
+				if(this.bricks.world[i] != 0)
+					content += "<div class='brick "+this.bricks.map[ this.bricks.world[i] ]+"' style='top: "+Math.floor(i/this.bricks.length)*19+"; left:"+(i%this.bricks.length)*52+"'></div>";
+			}
+			document.getElementById('bricks').innerHTML = content;
+		}
+
+		this.addListeners = function()
+		{
+			document.onkeydown = function(e)
+			{
+				// console.log('key pressed', e, game);
+				if(e.keyCode == 37)
+				{
+					game.paddle.position.x -= 15;
+				}
+				else if(e.keyCode == 39)
+				{
+					game.paddle.position.x += 15;
+				}
+				game.displayStuff();
+			}
+		}
+
+		this.detectCollision = function()
+		{
+			// console.log(this.ball.info.position.x, this.ball.info.position.y);
+			for(i in this.bricks.world)
+			{
+				if(	   this.bricks.world[i] != 0 
+					&& Math.abs(i%12 * 50 + 50 -this.ball.info.position.x) < 50
+					&& Math.abs(Math.floor(i/12) * 17 + 17 - this.ball.info.position.y) < 17
+				  )
+				{
+					this.bricks.world[i] = 0;
+
+					//did you hit the bottom of the brick?
+					if(this.ball.info.position.y > Math.floor(i/12) * 17)
+					{
+						this.ball.info.momentum.y = this.ball.info.momentum.y*-1;
+						console.log('hit the bottom', this.ball.info.momentum.y);
+					}
+					//or did you hit the side of the brick?
+					else if(this.ball.info.position.x <= i%12*50)
+						this.ball.info.momentum.x = this.ball.info.momentum.x*-1;
+					
+					//if you hit one brick, get out of the for loop
+					break;
+				}
+
+			}
+		}
+
+		this.createBricks();
+		this.addListeners();
+
+		this.gameLoop = function()
+		{
+			that.ball.move();
+			that.detectCollision();
+			that.displayStuff();
+		}
+	}
+
+	var game = new Game();
+	game.gameLoop();
+	setInterval(game.gameLoop, 10);
+</script>
+
+</body>
+</html>
